@@ -1,32 +1,89 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #f3ede1;
-  --panel: #fffdf7;
-  --ink: #1f2421;
-  --muted: #5b695d;
-  --accent: #0f766e;
-  --accent-soft: #e1f5f3;
+  --primary: #173F35;
+  --secondary: #3E6B5A;
+  --accent: #A7C957;
+  --bg: #F7F8F5;
+  --surface: #FFFFFF;
+  --text-main: #17201C;
+  --text-muted: #66736D;
+  --border-color: #DCE3DE;
+  --success: #3F8F5F;
+  --warning: #D89B32;
+  --error: #C95353;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-@layer base {
-  * {
-    box-sizing: border-box;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  body {
-    margin: 0;
-    min-height: 100svh;
-    background:
-      radial-gradient(circle at 12% 18%, #f7f0df 0%, transparent 36%),
-      radial-gradient(circle at 90% 78%, #d6efe5 0%, transparent 34%),
-      var(--bg);
-    color: var(--ink);
-    font-family: 'Space Grotesk', sans-serif;
-  }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
 
-  #root {
-    min-height: 100svh;
-  }
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 2rem 2rem; /* Reduced top padding from 2rem to 0 */
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Base button styles */
+button {
+  font-family: inherit;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--surface);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--secondary);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* Linear-style minimalist card */
+.surface-card {
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
