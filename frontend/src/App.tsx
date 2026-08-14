@@ -16,7 +16,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <Navbar />
+      <Navbar onGetStartedClick={handleOpenModal} />
       <HeroSection onLoadDatasetClick={handleOpenModal} />
       <FeaturesSection />
 
