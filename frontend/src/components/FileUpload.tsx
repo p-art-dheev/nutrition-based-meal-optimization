@@ -3,11 +3,12 @@ import './FileUpload.css';
 
 interface FileUploadProps {
   onClose: () => void;
+  onContinue?: () => void;
 }
 
 type Step = 'upload' | 'processing' | 'ready';
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onClose }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue }) => {
   const [step, setStep] = useState<Step>('upload');
   const [progressMsg, setProgressMsg] = useState('');
   const [uploadData, setUploadData] = useState<any>(null);
@@ -120,7 +121,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onClose }) => {
             <span className="check-icon">✓</span> Dataset successfully loaded
           </div>
 
-          <button className="btn-primary mt-4" onClick={onClose}>
+          <button className="btn-primary mt-4" onClick={() => {
+            if (onContinue) onContinue();
+            else onClose();
+          }}>
             Continue to Analysis
           </button>
         </div>
