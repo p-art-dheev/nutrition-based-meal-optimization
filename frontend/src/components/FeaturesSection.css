@@ -1,48 +1,289 @@
 .features-section {
-  padding-top: 1rem;
-  margin-top: auto;
+  width: 100%;
+  padding: 0;
+  flex-shrink: 0;
 }
 
-.feature-grid {
+.process-flow {
   display: flex;
-  gap: 3rem; /* Increased gap to give sections breathing room without borders */
+  align-items: stretch;
   justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 0;
 }
 
-.feature-card {
+.process-step {
+  --step-index: 0;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
   flex: 1;
+  min-width: 0;
+  padding: 1.25rem 1rem;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  opacity: 0;
+  transform: translateY(16px);
+  animation:
+    stepEnter 0.58s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+    stepCycle var(--cycle-duration) ease-in-out infinite;
+  animation-delay:
+    calc(0.12s + var(--step-index) * 0.17s),
+    calc(var(--step-index) * var(--step-duration));
+  transition: border-color 0.35s ease, background-color 0.35s ease;
+}
+
+.step-icon-wrapper {
   display: flex;
   flex-direction: column;
-  /* Removed heavy card background, borders, and shadows */
-  padding: 1rem 0; /* Reduced padding since it's not a boxed card anymore */
+  align-items: center;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.feature-number {
-  font-family: inherit; /* Removing monospace */
-  font-size: 14px; /* Metadata size */
-  color: var(--text-muted);
-  margin-bottom: 0.5rem; /* Reduced space below number */
-  font-weight: 500;
+.step-badge {
+  background-color: rgba(167, 201, 87, 0.25);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  position: absolute;
+  top: -1.65rem;
+  z-index: 1;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
-.feature-card h3 {
-  font-family: inherit;
-  font-size: 24px; /* Section heading */
-  letter-spacing: 0.5px; /* Reduced letter-spacing */
+.step-icon-box {
+  width: 72px;
+  height: 72px;
+  background-color: var(--surface);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a9c33;
+  box-shadow: 0 8px 24px rgba(15, 82, 52, 0.06);
+  margin-bottom: 0.75rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+.step-icon-box svg {
+  stroke-width: 2.5;
+}
+
+.icon-underline {
+  width: 32px;
+  height: 3px;
+  background-color: var(--primary);
+  border-radius: 2px;
+  opacity: 0.35;
+  transition: opacity 0.3s ease, width 0.3s ease;
+}
+
+.step-content {
+  text-align: left;
+  padding-top: 0.25rem;
+}
+
+.step-content h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 0.75rem; /* Reduced space below heading */
-  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
 }
 
-.feature-card p {
+.step-content p {
+  font-size: 0.875rem;
   color: var(--text-muted);
-  font-size: 16px; /* Body */
-  line-height: 1.6;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 200px;
 }
 
-@media (max-width: 768px) {
-  .feature-grid {
-    flex-direction: column;
+@keyframes stepEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stepCycle {
+  0%, 28%, 100% {
+    border-color: transparent;
+    background-color: transparent;
+  }
+  8%, 20% {
+    border-color: rgba(15, 82, 52, 0.12);
+    background-color: rgba(15, 82, 52, 0.03);
+  }
+}
+
+.process-step:nth-child(1) .step-icon-box,
+.process-step:nth-child(3) .step-icon-box,
+.process-step:nth-child(5) .step-icon-box {
+  animation: iconPulse var(--cycle-duration) ease-in-out infinite;
+}
+
+.process-step:nth-child(1) .step-icon-box { animation-delay: 0s; }
+.process-step:nth-child(3) .step-icon-box { animation-delay: var(--step-duration); }
+.process-step:nth-child(5) .step-icon-box { animation-delay: calc(var(--step-duration) * 2); }
+
+.process-step:nth-child(1) .icon-underline { animation: underlinePulse var(--cycle-duration) ease-in-out infinite; }
+.process-step:nth-child(3) .icon-underline { animation: underlinePulse var(--cycle-duration) ease-in-out infinite var(--step-duration); }
+.process-step:nth-child(5) .icon-underline { animation: underlinePulse var(--cycle-duration) ease-in-out infinite calc(var(--step-duration) * 2); }
+
+@keyframes iconPulse {
+  0%, 28%, 100% {
+    transform: translateY(0);
+    box-shadow: 0 8px 24px rgba(15, 82, 52, 0.06);
+    color: #5a9c33;
+  }
+  8%, 20% {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 28px rgba(15, 82, 52, 0.12);
+    color: var(--primary);
+  }
+}
+
+@keyframes underlinePulse {
+  0%, 28%, 100% {
+    opacity: 0.35;
+    width: 32px;
+  }
+  8%, 20% {
+    opacity: 1;
+    width: 42px;
+  }
+}
+
+/* Dashed line → arrowhead connectors */
+.process-connector {
+  --connector-index: 0;
+  --line-length: 64;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  flex-shrink: 0;
+  align-self: center;
+  margin-top: -0.5rem;
+}
+
+.connector-svg {
+  width: 100%;
+  height: 24px;
+  overflow: visible;
+}
+
+.connector-base {
+  stroke: var(--border-color);
+  stroke-width: 2;
+  fill: none;
+}
+
+.connector-active {
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  fill: none;
+  stroke-dashoffset: var(--line-length);
+  animation: connectorDraw var(--cycle-duration) ease-in-out infinite;
+  animation-delay: calc(var(--connector-index) * var(--step-duration) + 0.75s);
+}
+
+.connector-arrowhead {
+  fill: var(--border-color);
+  animation: arrowheadColor var(--cycle-duration) ease-in-out infinite;
+  animation-delay: calc(var(--connector-index) * var(--step-duration) + 0.75s);
+}
+
+@keyframes connectorDraw {
+  0%, 12%, 100% {
+    stroke-dashoffset: var(--line-length);
+    opacity: 0.3;
+  }
+  22%, 32% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes arrowheadColor {
+  0%, 12%, 100% {
+    fill: var(--border-color);
+  }
+  22%, 32% {
+    fill: var(--primary);
+  }
+}
+
+@media (max-width: 992px) {
+  .landing-page {
+    min-height: auto;
     gap: 2rem;
+  }
+
+  .features-section {
+    padding: 2rem 0 1rem;
+  }
+
+  .process-flow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-top: 0;
+  }
+
+  .process-step {
+    flex: none;
+    padding: 1.5rem 1rem 1.25rem;
+    justify-content: flex-start;
+  }
+
+  .step-badge {
+    position: static;
+    margin-bottom: 0.75rem;
+    align-self: flex-start;
+  }
+
+  .step-content p {
+    max-width: none;
+  }
+
+  .process-connector {
+    width: 40px;
+    height: 56px;
+    margin: 0.15rem auto;
+    transform: rotate(90deg);
+  }
+
+  .process-connector .connector-svg {
+    width: 56px;
+    height: 24px;
+  }
+
+  .process-connector .connector-active {
+    animation-name: connectorDraw;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .process-step,
+  .step-icon-box,
+  .icon-underline,
+  .connector-active,
+  .connector-arrowhead {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+    stroke-dashoffset: 0;
+  }
+
+  .process-step {
+    border-color: transparent;
+    background-color: transparent;
   }
 }

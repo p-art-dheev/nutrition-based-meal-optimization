@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
+import type { UploadData } from '../types/app';
 import './FileUpload.css';
 
 interface FileUploadProps {
-  onClose: () => void;
+  onClose?: () => void;
   onContinue?: () => void;
+  onUploadSuccess?: (data: UploadData) => void;
 }
 
 type Step = 'upload' | 'processing' | 'ready';
 
-export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue, onUploadSuccess }) => {
   const [step, setStep] = useState<Step>('upload');
   const [progressMsg, setProgressMsg] = useState('');
   const [uploadData, setUploadData] = useState<any>(null);
@@ -58,6 +60,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue }) =
       await new Promise(resolve => setTimeout(resolve, 600));
       
       setUploadData(data);
+      onUploadSuccess?.(data);
       setStep('ready');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred.');
@@ -123,7 +126,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onClose, onContinue }) =
 
           <button className="btn-primary mt-4" onClick={() => {
             if (onContinue) onContinue();
-            else onClose();
+            else onClose?.();
           }}>
             Continue to Analysis
           </button>

@@ -2,43 +2,80 @@ import { useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { FeaturesSection } from './components/FeaturesSection';
-import { Modal } from './components/Modal';
-import { FileUpload } from './components/FileUpload';
 import { Analysis } from './components/Analysis';
+import { DataPage } from './components/DataPage';
+import { Optimize } from './components/Optimize';
+import type { AppView, UploadData } from './types/app';
 
 function App() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [view, setView] = useState<'landing' | 'analysis'>('landing');
+  const [view, setView] = useState<AppView>('landing');
+  const [uploadData, setUploadData] = useState<UploadData | null>(null);
 
-  const handleOpenModal = () => setIsModalOpen(true);
-  
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleNavigate = (target: AppView) => {
+    setView(target);
   };
 
-  const handleContinueToAnalysis = () => {
-    setIsModalOpen(false);
-    setView('analysis');
+  const handleUploadSuccess = (data: UploadData) => {
+    setUploadData(data);
+  };
+
+  const handleResetUpload = () => {
+    setUploadData(null);
+  };
+
+  const handleGetStarted = () => {
+    if (view === 'landing') {
+      handleNavigate('data');
+    } else {
+      handleNavigate('landing');
+    }
+  };
+
+  const renderContent = () => {
+    switch (view) {
+      case 'landing':
+        return (
+          <div className="landing-page">
+            <HeroSection onLoadDatasetClick={() => handleNavigate('data')} />
+            <FeaturesSection />
+          </div>
+        );
+      case 'data':
+        return (
+          <DataPage
+            uploadData={uploadData}
+            onUploadSuccess={handleUploadSuccess}
+            onReset={handleResetUpload}
+            onNavigateToAnalysis={() => handleNavigate('analysis')}
+            onNavigateToOptimize={() => handleNavigate('optimize')}
+          />
+        );
+      case 'analysis':
+        return <Analysis hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
+      case 'optimize':
+        return <Optimize hasData={uploadData !== null} onNavigateToData={() => handleNavigate('data')} />;
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="app-container">
-      <Navbar onGetStartedClick={view === 'landing' ? handleOpenModal : () => setView('landing')} />
-      
-      {view === 'landing' ? (
-        <>
-          <HeroSection onLoadDatasetClick={handleOpenModal} />
-          <FeaturesSection />
-
-          <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-            <FileUpload onClose={handleCloseModal} onContinue={handleContinueToAnalysis} />
-          </Modal>
-        </>
-      ) : (
-        <div style={{ padding: '20px 20px', minHeight: 'calc(100vh - 80px)' }}>
-          <Analysis />
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="app-header-inner">
+          <Navbar
+            activeView={view}
+            onNavigate={handleNavigate}
+            onGetStartedClick={handleGetStarted}
+          />
         </div>
-      )}
+      </header>
+
+      <main className="app-main">
+        <div className={`app-container${view !== 'landing' ? ' page-view' : ''}`}>
+          {renderContent()}
+        </div>
+      </main>
     </div>
   );
 }
