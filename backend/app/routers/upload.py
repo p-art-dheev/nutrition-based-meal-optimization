@@ -37,6 +37,7 @@ async def upload_data(files: List[UploadFile] = File(...)):
     
     # Persist the dataframe globally for analysis
     state.global_df = combined_df
+    state.reset_pantry()
     
     # Calculate statistics based on the requirements
     files_processed = len(files)

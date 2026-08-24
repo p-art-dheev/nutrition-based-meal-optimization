@@ -64,6 +64,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .app-container {
@@ -74,6 +75,19 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.app-container--full {
+  max-width: none;
+  padding: 0;
+  height: calc(100dvh - var(--app-header-h));
+  overflow: hidden;
+}
+
+.app-container--full.page-view {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .landing-page {

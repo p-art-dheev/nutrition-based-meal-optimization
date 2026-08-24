@@ -5,6 +5,7 @@ import { FeaturesSection } from './components/FeaturesSection';
 import { Analysis } from './components/Analysis';
 import { DataPage } from './components/DataPage';
 import { Optimize } from './components/Optimize';
+import { clearPantry } from './services/dataApi';
 import type { AppView, UploadData } from './types/app';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
   };
 
   const handleResetUpload = () => {
+    clearPantry().catch(() => undefined);
     setUploadData(null);
   };
 
@@ -72,7 +74,15 @@ function App() {
       </header>
 
       <main className="app-main">
-        <div className={`app-container${view !== 'landing' ? ' page-view' : ''}`}>
+        <div
+          className={[
+            'app-container',
+            view !== 'landing' ? 'page-view' : '',
+            view === 'data' && uploadData ? 'app-container--full' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {renderContent()}
         </div>
       </main>

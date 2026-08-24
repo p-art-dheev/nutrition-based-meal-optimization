@@ -1,32 +1,26 @@
-export interface DatasetStatus {
-  loaded: boolean
-  fileCount: number
-  fileNames: string[]
-  totalRecords: number
-  columnCount: number
-  missingValues: number
-  duplicateRecords: number
-  uploadedAt?: string
+export interface DatasetRow {
+  id: number;
+  in_pantry: boolean;
+  values: Record<string, string | number | null>;
 }
 
-export interface DataPreviewRow {
-  id: number
-  food: string
-  category: string
-  calories: number
-  protein: number
-  carbohydrates: number
-  fat: number
-  fiber: number
-  sugar: number
-  sodium: number
-  calcium: number
-  iron: number
-  potassium: number
-  cost: number
+export interface DatasetRowsResponse {
+  columns: string[];
+  food_column: string;
+  total: number;
+  offset: number;
+  limit: number;
+  rows: DatasetRow[];
 }
 
-export interface UploadDatasetResult {
-  status: DatasetStatus
-  preview: DataPreviewRow[]
+export interface PantryItem {
+  id: number;
+  food: string | null;
+  values: Record<string, string | number | null>;
+}
+
+export interface PantryResponse {
+  food_column: string;
+  count: number;
+  items: PantryItem[];
 }
