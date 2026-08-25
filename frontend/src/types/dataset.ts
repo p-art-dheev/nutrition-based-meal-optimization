@@ -16,7 +16,6 @@ export interface DatasetRowsResponse {
 export interface PantryItem {
   id: number;
   food: string | null;
-  values: Record<string, string | number | null>;
 }
 
 export interface PantryResponse {

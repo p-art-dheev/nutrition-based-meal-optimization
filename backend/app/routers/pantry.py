@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import app.state as state
-from app.data_utils import get_food_column, get_food_name, row_to_dict
+from app.data_utils import get_food_column, get_food_name
 
 router = APIRouter()
 
@@ -29,24 +29,28 @@ def _validate_row_id(df, row_id: int) -> None:
 def get_pantry():
     df = _require_dataset()
     food_column = get_food_column(df)
-    columns = [str(col) for col in df.columns]
 
     items = []
     for row_id in sorted(state.pantry_ids):
-        _validate_row_id(df, row_id)
-        items.append(
-            {
-                "id": row_id,
-                "food": get_food_name(df, row_id),
-                "values": row_to_dict(df, row_id, columns),
-            }
-        )
+        if 0 <= row_id < len(df):
+            items.append(
+                {
+                    "id": row_id,
+                    "food": get_food_name(df, row_id),
+                }
+            )
 
     return {
         "food_column": food_column,
         "count": len(items),
         "items": items,
     }
+
+
+@router.get("/api/pantry/count")
+def get_pantry_count():
+    _require_dataset()
+    return {"count": len(state.pantry_ids)}
 
 
 @router.post("/api/pantry/add")

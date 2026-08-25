@@ -1,59 +1,38 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal } from './Modal';
-import { clearPantry, fetchPantry, removeFromPantry } from '../services/dataApi';
+import { clearPantry, removeFromPantry } from '../services/dataApi';
 import type { PantryItem } from '../types/dataset';
 import './PantryModal.css';
 
 interface PantryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  refreshKey: number;
-  onPantryChange: () => void;
+  items: PantryItem[];
+  onRemove: (ids: number[]) => void;
 }
 
 export const PantryModal: React.FC<PantryModalProps> = ({
   isOpen,
   onClose,
-  refreshKey,
-  onPantryChange,
+  items,
+  onRemove,
 }) => {
-  const [items, setItems] = useState<PantryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<number | null>(null);
 
-  const loadPantry = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await fetchPantry();
-      setItems(data.items);
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadPantry();
-    }
-  }, [loadPantry, refreshKey, isOpen]);
-
   const handleRemove = async (rowId: number) => {
+    onRemove([rowId]);
     setRemovingId(rowId);
     try {
       await removeFromPantry(rowId);
-      setItems((prev) => prev.filter((item) => item.id !== rowId));
-      onPantryChange();
     } finally {
       setRemovingId(null);
     }
   };
 
   const handleClear = async () => {
+    const ids = items.map((item) => item.id);
+    onRemove(ids);
     await clearPantry();
-    setItems([]);
-    onPantryChange();
   };
 
   return (
@@ -67,9 +46,7 @@ export const PantryModal: React.FC<PantryModalProps> = ({
         </header>
 
         <div className="pantry-modal-body">
-          {loading ? (
-            <p className="pantry-empty">Loading…</p>
-          ) : items.length === 0 ? (
+          {items.length === 0 ? (
             <p className="pantry-empty">
               No items yet. Use the <strong>+</strong> button or select rows in the dataset table to build your pantry.
             </p>

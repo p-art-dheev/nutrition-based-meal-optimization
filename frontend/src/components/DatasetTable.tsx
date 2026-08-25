@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { addBulkToPantry, addToPantry, fetchDatasetRows } from '../services/dataApi';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { addBulkToPantry, addToPantry } from '../services/dataApi';
 import type { DatasetRow } from '../types/dataset';
 import './DatasetTable.css';
 
 interface DatasetTableProps {
-  refreshKey: number;
-  onPantryChange: () => void;
+  rows: DatasetRow[];
+  columns: string[];
+  foodColumn: string;
+  pantryIds: Set<number>;
+  onAddToPantry: (ids: number[]) => void;
 }
 
 const formatCell = (value: string | number | null | undefined): string => {
@@ -17,38 +20,77 @@ const formatCell = (value: string | number | null | undefined): string => {
   return String(value);
 };
 
-export const DatasetTable: React.FC<DatasetTableProps> = ({ refreshKey, onPantryChange }) => {
-  const [columns, setColumns] = useState<string[]>([]);
-  const [foodColumn, setFoodColumn] = useState('food');
-  const [rows, setRows] = useState<DatasetRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [addingId, setAddingId] = useState<number | null>(null);
-  const [bulkAdding, setBulkAdding] = useState(false);
+interface TableRowProps {
+  row: DatasetRow;
+  displayColumns: string[];
+  foodColumn: string;
+  inPantry: boolean;
+  selected: boolean;
+  onToggle: (id: number) => void;
+  onAdd: (id: number) => void;
+}
+
+const DatasetTableRow = memo(function DatasetTableRow({
+  row,
+  displayColumns,
+  foodColumn,
+  inPantry,
+  selected,
+  onToggle,
+  onAdd,
+}: TableRowProps) {
+  const foodName = formatCell(row.values[foodColumn]);
+
+  return (
+    <tr className={`${inPantry ? 'in-pantry' : ''} ${selected ? 'selected' : ''}`.trim()}>
+      <td className="col-select sticky-col-select">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggle(row.id)}
+          disabled={inPantry}
+          aria-label={`Select ${foodName}`}
+        />
+      </td>
+      <td className="col-food sticky-col">
+        <div className="food-cell">
+          <button
+            type="button"
+            className={`btn-add-pantry${inPantry ? ' added' : ''}`}
+            onClick={() => onAdd(row.id)}
+            disabled={inPantry}
+            title={inPantry ? 'Already in pantry' : 'Add to pantry'}
+          >
+            {inPantry ? '✓' : '+'}
+          </button>
+          <span className="food-name" title={foodName}>
+            {foodName}
+          </span>
+        </div>
+      </td>
+      {displayColumns.map((col) => (
+        <td key={col}>{formatCell(row.values[col])}</td>
+      ))}
+    </tr>
+  );
+});
+
+export const DatasetTable: React.FC<DatasetTableProps> = ({
+  rows,
+  columns,
+  foodColumn,
+  pantryIds,
+  onAddToPantry,
+}) => {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [pendingAdd, setPendingAdd] = useState(false);
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
-  const loadRows = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchDatasetRows(0, 0);
-      setColumns(data.columns);
-      setFoodColumn(data.food_column);
-      setRows(data.rows);
-      setTotal(data.total);
-      setSelectedIds(new Set());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dataset');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadRows();
-  }, [loadRows, refreshKey]);
+  const displayColumns = useMemo(
+    () => columns.filter((col) => col !== foodColumn),
+    [columns, foodColumn],
+  );
 
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
@@ -59,88 +101,77 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({ refreshKey, onPantry
     });
   }, [rows, search, foodColumn]);
 
-  const selectableRows = useMemo(
-    () => filteredRows.filter((row) => !row.in_pantry),
-    [filteredRows],
+  const selectableIds = useMemo(
+    () => filteredRows.filter((row) => !pantryIds.has(row.id)).map((row) => row.id),
+    [filteredRows, pantryIds],
   );
 
   const allSelectableSelected =
-    selectableRows.length > 0 && selectableRows.every((row) => selectedIds.has(row.id));
+    selectableIds.length > 0 && selectableIds.every((id) => selectedIds.has(id));
+  const someSelectableSelected = selectableIds.some((id) => selectedIds.has(id));
 
-  const someSelectableSelected = selectableRows.some((row) => selectedIds.has(row.id));
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelectableSelected && !allSelectableSelected;
+    }
+  }, [someSelectableSelected, allSelectableSelected]);
 
-  const handleToggleRow = (rowId: number) => {
+  const pantryIdsRef = useRef(pantryIds);
+  pantryIdsRef.current = pantryIds;
+
+  const handleToggleRow = useCallback((rowId: number) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(rowId)) next.delete(rowId);
       else next.add(rowId);
       return next;
     });
-  };
+  }, []);
 
   const handleSelectAll = () => {
     if (allSelectableSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(selectableRows.map((row) => row.id)));
+      setSelectedIds(new Set(selectableIds));
     }
   };
 
-  const handleAddToPantry = async (rowId: number) => {
-    setAddingId(rowId);
-    try {
-      await addToPantry(rowId);
-      setRows((prev) =>
-        prev.map((row) => (row.id === rowId ? { ...row, in_pantry: true } : row)),
-      );
+  const handleAddOne = useCallback(
+    (rowId: number) => {
+      if (pantryIdsRef.current.has(rowId)) return;
+      onAddToPantry([rowId]);
       setSelectedIds((prev) => {
+        if (!prev.has(rowId)) return prev;
         const next = new Set(prev);
         next.delete(rowId);
         return next;
       });
-      onPantryChange();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add to pantry');
-    } finally {
-      setAddingId(null);
-    }
-  };
+      addToPantry(rowId).catch(() => undefined);
+    },
+    [onAddToPantry],
+  );
 
   const handleAddSelected = async () => {
-    const ids = Array.from(selectedIds);
+    const ids = Array.from(selectedIds).filter((id) => !pantryIds.has(id));
     if (ids.length === 0) return;
 
-    setBulkAdding(true);
+    onAddToPantry(ids);
+    setSelectedIds(new Set());
+    setPendingAdd(true);
     try {
       await addBulkToPantry(ids);
-      const idSet = new Set(ids);
-      setRows((prev) =>
-        prev.map((row) => (idSet.has(row.id) ? { ...row, in_pantry: true } : row)),
-      );
-      setSelectedIds(new Set());
-      onPantryChange();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add selected items');
+    } catch {
+      // UI already updated; keep local pantry so the flow stays smooth
     } finally {
-      setBulkAdding(false);
+      setPendingAdd(false);
     }
   };
-
-  const displayColumns = columns.filter((col) => col !== foodColumn);
-
-  if (loading) {
-    return <div className="dataset-table-status">Loading dataset…</div>;
-  }
-
-  if (error) {
-    return <div className="dataset-table-status error">{error}</div>;
-  }
 
   return (
     <div className="dataset-table-wrapper">
       <div className="dataset-table-toolbar">
         <div className="dataset-table-meta">
-          <span>{total.toLocaleString()} food items</span>
+          <span>{rows.length.toLocaleString()} food items</span>
           <span className="meta-dot">·</span>
           <span>{columns.length} columns</span>
           {search && (
@@ -162,9 +193,9 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({ refreshKey, onPantry
               type="button"
               className="toolbar-btn primary"
               onClick={handleAddSelected}
-              disabled={bulkAdding}
+              disabled={pendingAdd}
             >
-              {bulkAdding ? 'Adding…' : `Add selected (${selectedIds.size})`}
+              {pendingAdd ? 'Adding…' : `Add selected (${selectedIds.size})`}
             </button>
           )}
           <input
@@ -184,13 +215,11 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({ refreshKey, onPantry
               <th className="col-select sticky-col-select">
                 <label className="select-all-label">
                   <input
+                    ref={selectAllRef}
                     type="checkbox"
                     checked={allSelectableSelected}
-                    ref={(el) => {
-                      if (el) el.indeterminate = someSelectableSelected && !allSelectableSelected;
-                    }}
                     onChange={handleSelectAll}
-                    disabled={selectableRows.length === 0}
+                    disabled={selectableIds.length === 0}
                     title="Select all"
                   />
                   <span className="select-all-text">All</span>
@@ -203,50 +232,18 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({ refreshKey, onPantry
             </tr>
           </thead>
           <tbody>
-            {filteredRows.map((row) => {
-              const foodName = formatCell(row.values[foodColumn]);
-              const isSelected = selectedIds.has(row.id);
-              return (
-                <tr
-                  key={row.id}
-                  className={[
-                    row.in_pantry ? 'in-pantry' : undefined,
-                    isSelected ? 'selected' : undefined,
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <td className="col-select sticky-col-select">
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => handleToggleRow(row.id)}
-                      disabled={row.in_pantry}
-                      aria-label={`Select ${foodName}`}
-                    />
-                  </td>
-                  <td className="col-food sticky-col">
-                    <div className="food-cell">
-                      <button
-                        type="button"
-                        className={`btn-add-pantry${row.in_pantry ? ' added' : ''}`}
-                        onClick={() => handleAddToPantry(row.id)}
-                        disabled={row.in_pantry || addingId === row.id}
-                        title={row.in_pantry ? 'Already in pantry' : 'Add to pantry'}
-                      >
-                        {row.in_pantry ? '✓' : '+'}
-                      </button>
-                      <span className="food-name" title={foodName}>
-                        {foodName}
-                      </span>
-                    </div>
-                  </td>
-                  {displayColumns.map((col) => (
-                    <td key={col}>{formatCell(row.values[col])}</td>
-                  ))}
-                </tr>
-              );
-            })}
+            {filteredRows.map((row) => (
+              <DatasetTableRow
+                key={row.id}
+                row={row}
+                displayColumns={displayColumns}
+                foodColumn={foodColumn}
+                inPantry={pantryIds.has(row.id)}
+                selected={selectedIds.has(row.id)}
+                onToggle={handleToggleRow}
+                onAdd={handleAddOne}
+              />
+            ))}
           </tbody>
         </table>
       </div>
