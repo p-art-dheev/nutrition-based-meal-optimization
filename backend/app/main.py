@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, analysis, data, pantry
+from app.routers import upload, analysis, data, pantry, optimization
 
 app = FastAPI(title="Nutrition Based Meal Optimization API")
 
@@ -22,3 +22,4 @@ app.include_router(upload.router)
 app.include_router(analysis.router)
 app.include_router(data.router)
 app.include_router(pantry.router)
+app.include_router(optimization.router)
