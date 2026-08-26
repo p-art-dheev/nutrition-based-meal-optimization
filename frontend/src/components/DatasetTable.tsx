@@ -188,6 +188,13 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
           )}
         </div>
         <div className="dataset-toolbar-actions">
+          <input
+            type="search"
+            className="dataset-search"
+            placeholder="Search food items…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           {selectedIds.size > 0 && (
             <button
               type="button"
@@ -198,13 +205,6 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
               {pendingAdd ? 'Adding…' : `Add selected (${selectedIds.size})`}
             </button>
           )}
-          <input
-            type="search"
-            className="dataset-search"
-            placeholder="Search food items…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
         </div>
       </div>
 
