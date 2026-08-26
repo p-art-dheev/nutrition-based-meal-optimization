@@ -17,6 +17,43 @@ export interface NutritionTargets {
   fiber: number
 }
 
+export interface HighProteinInput {
+  calorieMax: number
+  fatMax: number
+  proteinMin: number
+  quantityMax: number
+}
+
+export interface HighProteinFoodResult {
+  id: number
+  food: string
+  quantity: number
+  calories: number
+  protein: number
+  fat: number
+}
+
+export interface HighProteinResult {
+  status: string
+  message: string
+  foods: HighProteinFoodResult[]
+  totals: {
+    calories: number
+    protein: number
+    fat: number
+    quantity: number
+    objective_protein: number
+  }
+  limits: {
+    calorie_max: number
+    fat_max: number
+    protein_min: number
+    quantity_max: number
+  }
+  food_count: number
+  source: 'dataset' | 'pantry'
+}
+
 export interface OptimizationInput {
   age: number
   weightKg: number

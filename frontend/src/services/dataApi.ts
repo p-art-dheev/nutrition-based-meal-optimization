@@ -1,11 +1,16 @@
 import type { DatasetRowsResponse, PantryResponse } from '../types/dataset';
+import type { HighProteinInput, HighProteinResult } from '../types/optimization';
 
 const API_BASE = 'http://127.0.0.1:8000';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const err = await response.json().catch(() => ({ detail: 'Request failed' }));
-    throw new Error(err.detail || 'Request failed');
+    const detail = err.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((item: { msg?: string }) => item.msg || JSON.stringify(item)).join(', ')
+      : detail || 'Request failed';
+    throw new Error(message);
   }
   return response.json();
 }
@@ -46,6 +51,17 @@ export const removeFromPantry = async (rowId: number): Promise<{ count: number }
     body: JSON.stringify({ row_id: rowId }),
   });
   return handleResponse(response);
+};
+
+export const runHighProteinOptimization = async (
+  input: HighProteinInput,
+): Promise<HighProteinResult> => {
+  const response = await fetch(`${API_BASE}/api/optimization/high-protein`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  return handleResponse<HighProteinResult>(response);
 };
 
 export const clearPantry = async (): Promise<void> => {

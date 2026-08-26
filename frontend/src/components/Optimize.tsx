@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import type { OptimizationProblem } from '../types/app';
+import type { HighProteinInput, HighProteinResult } from '../types/optimization';
+import { runHighProteinOptimization } from '../services/dataApi';
 import './Optimize.css';
 
 interface ProblemOption {
@@ -15,9 +17,9 @@ const PROBLEMS: ProblemOption[] = [
     id: 'high-protein',
     title: 'High Protein',
     description:
-      'Build a meal plan that maximizes protein intake while staying within calorie and budget limits.',
+      'Maximize protein from pantry foods while staying within calorie, fat, and quantity limits.',
     objective: 'Maximize total protein (g)',
-    constraints: ['Calorie range', 'Daily budget', 'Macro balance', 'Serving limits'],
+    constraints: ['Calories ≤ Cmax', 'Fat ≤ Fmax', 'Protein ≥ Pmin', 'Quantity ≤ Qmax'],
   },
   {
     id: 'nutrient-deficiency',
@@ -29,6 +31,25 @@ const PROBLEMS: ProblemOption[] = [
   },
 ];
 
+const EMPTY_HIGH_PROTEIN: Record<keyof HighProteinInput, string> = {
+  calorieMax: '',
+  fatMax: '',
+  proteinMin: '',
+  quantityMax: '',
+};
+
+const HIGH_PROTEIN_FIELDS: {
+  key: keyof HighProteinInput;
+  label: string;
+  symbol: string;
+  unit: string;
+}[] = [
+  { key: 'calorieMax', label: 'Maximum daily calorie limit', symbol: 'Cmax', unit: 'kcal' },
+  { key: 'fatMax', label: 'Maximum daily fat limit', symbol: 'Fmax', unit: 'g' },
+  { key: 'proteinMin', label: 'Minimum required protein', symbol: 'Pmin', unit: 'g' },
+  { key: 'quantityMax', label: 'Maximum total food quantity', symbol: 'Qmax', unit: 'g' },
+];
+
 interface OptimizeProps {
   hasData: boolean;
   onNavigateToData: () => void;
@@ -36,8 +57,51 @@ interface OptimizeProps {
 
 export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData }) => {
   const [selectedProblem, setSelectedProblem] = useState<OptimizationProblem | null>(null);
+  const [highProteinForm, setHighProteinForm] = useState(EMPTY_HIGH_PROTEIN);
+  const [result, setResult] = useState<HighProteinResult | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [solving, setSolving] = useState(false);
 
   const activeProblem = PROBLEMS.find((p) => p.id === selectedProblem);
+
+  const handleSelectProblem = (id: OptimizationProblem) => {
+    setSelectedProblem(id);
+    setFormError(null);
+    setResult(null);
+  };
+
+  const handleHighProteinChange = (key: keyof HighProteinInput, value: string) => {
+    setHighProteinForm((prev) => ({ ...prev, [key]: value }));
+    setFormError(null);
+  };
+
+  const handleHighProteinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const values: Partial<HighProteinInput> = {};
+
+    for (const field of HIGH_PROTEIN_FIELDS) {
+      const raw = highProteinForm[field.key].trim();
+      const parsed = Number(raw);
+      if (!raw || Number.isNaN(parsed) || parsed <= 0) {
+        setFormError(`Enter a valid positive value for ${field.symbol} (${field.label}).`);
+        setResult(null);
+        return;
+      }
+      values[field.key] = parsed;
+    }
+
+    setFormError(null);
+    setSolving(true);
+    setResult(null);
+    try {
+      const data = await runHighProteinOptimization(values as HighProteinInput);
+      setResult(data);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Optimization failed.');
+    } finally {
+      setSolving(false);
+    }
+  };
 
   if (!hasData) {
     return (
@@ -77,7 +141,7 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
             key={problem.id}
             type="button"
             className={`problem-card surface-card ${selectedProblem === problem.id ? 'selected' : ''}`}
-            onClick={() => setSelectedProblem(problem.id)}
+            onClick={() => handleSelectProblem(problem.id)}
           >
             <div className="problem-card-header">
               <div className="problem-icon">
@@ -121,9 +185,103 @@ export const Optimize: React.FC<OptimizeProps> = ({ hasData, onNavigateToData })
               </ul>
             </div>
           </div>
-          <button className="btn-primary run-btn" disabled>
-            Configure &amp; Run — Coming Soon
-          </button>
+
+          {selectedProblem === 'high-protein' ? (
+            <form className="opt-form" onSubmit={handleHighProteinSubmit}>
+              <h3 className="opt-form-title">User Input</h3>
+              <div className="opt-form-grid">
+                {HIGH_PROTEIN_FIELDS.map((field) => (
+                  <label key={field.key} className="opt-field">
+                    <span className="opt-field-label">
+                      {field.label} ({field.unit})
+                      <span className="opt-field-symbol">{field.symbol}</span>
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      inputMode="decimal"
+                      placeholder={`Enter ${field.symbol}`}
+                      value={highProteinForm[field.key]}
+                      onChange={(e) => handleHighProteinChange(field.key, e.target.value)}
+                    />
+                  </label>
+                ))}
+              </div>
+              {formError && <p className="opt-form-error">{formError}</p>}
+              <button type="submit" className="btn-primary" disabled={solving}>
+                {solving ? 'Solving…' : 'Run Optimization'}
+              </button>
+            </form>
+          ) : (
+            <button className="btn-primary run-btn" disabled>
+              Configure &amp; Run — Coming Soon
+            </button>
+          )}
+        </div>
+      )}
+
+      {result && selectedProblem === 'high-protein' && (
+        <div className="opt-result surface-card">
+          <div className="opt-result-header">
+            <h2>Model Output</h2>
+            <span className={`opt-status ${result.status === 'Optimal' ? 'ok' : 'warn'}`}>
+              {result.status}
+            </span>
+          </div>
+          <p className="opt-result-message">
+            {result.message} Using {result.food_count} food{result.food_count === 1 ? '' : 's'} from the {result.source}.
+          </p>
+
+          <div className="opt-totals">
+            <div className="opt-total">
+              <span>Total calories</span>
+              <strong>{result.totals.calories.toLocaleString()} kcal</strong>
+              <em>≤ {result.limits.calorie_max.toLocaleString()} Cmax</em>
+            </div>
+            <div className="opt-total">
+              <span>Total protein</span>
+              <strong>{result.totals.protein.toLocaleString()} g</strong>
+              <em>≥ {result.limits.protein_min.toLocaleString()} Pmin</em>
+            </div>
+            <div className="opt-total">
+              <span>Total fat</span>
+              <strong>{result.totals.fat.toLocaleString()} g</strong>
+              <em>≤ {result.limits.fat_max.toLocaleString()} Fmax</em>
+            </div>
+            <div className="opt-total">
+              <span>Total food quantity</span>
+              <strong>{result.totals.quantity.toLocaleString()} g</strong>
+              <em>≤ {result.limits.quantity_max.toLocaleString()} Qmax</em>
+            </div>
+          </div>
+
+          {result.foods.length > 0 && (
+            <div className="opt-result-table-wrap">
+              <table className="opt-result-table">
+                <thead>
+                  <tr>
+                    <th>Food</th>
+                    <th>Quantity xᵢ (g)</th>
+                    <th>Calories (kcal)</th>
+                    <th>Protein (g)</th>
+                    <th>Fat (g)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.foods.map((food) => (
+                    <tr key={food.id}>
+                      <td>{food.food}</td>
+                      <td>{food.quantity.toLocaleString()}</td>
+                      <td>{food.calories.toLocaleString()}</td>
+                      <td>{food.protein.toLocaleString()}</td>
+                      <td>{food.fat.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>
