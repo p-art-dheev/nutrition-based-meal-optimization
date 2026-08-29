@@ -3,7 +3,7 @@ import './FeaturesSection.css';
 
 const STEPS = [
   {
-    number: '01',
+    id: 'load',
     title: 'LOAD DATA',
     description: 'Import and process food nutrition data easily.',
     icon: (
@@ -15,7 +15,7 @@ const STEPS = [
     ),
   },
   {
-    number: '02',
+    id: 'analyze',
     title: 'ANALYZE',
     description: 'Generate insightful statistics and visualizations.',
     icon: (
@@ -27,7 +27,7 @@ const STEPS = [
     ),
   },
   {
-    number: '03',
+    id: 'optimize',
     title: 'OPTIMIZE',
     description: 'Find the best meal solution that fits your goals.',
     icon: (
@@ -82,13 +82,12 @@ export const FeaturesSection: React.FC = () => {
     <section className="features-section" aria-label="How it works">
       <div className="process-flow">
         {STEPS.map((step, index) => (
-          <React.Fragment key={step.number}>
+          <React.Fragment key={step.id}>
             <div
               className="process-step"
               style={{ '--step-index': index } as React.CSSProperties}
             >
               <div className="step-icon-wrapper">
-                <div className="step-badge">{step.number}</div>
                 <div className="step-icon-box">{step.icon}</div>
                 <div className="icon-underline" />
               </div>

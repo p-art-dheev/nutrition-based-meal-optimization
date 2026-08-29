@@ -129,7 +129,7 @@ export const DataPage: React.FC<DataPageProps> = ({
               <button type="button" className="data-btn primary" onClick={onNavigateToOptimize}>
                 Optimize
               </button>
-              <button type="button" className="data-btn text" onClick={onReset}>
+              <button type="button" className="data-btn outline" onClick={onReset}>
                 Upload New
               </button>
             </div>

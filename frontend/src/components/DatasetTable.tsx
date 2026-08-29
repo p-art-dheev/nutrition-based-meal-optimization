@@ -187,7 +187,7 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
             </>
           )}
         </div>
-        <div className="dataset-toolbar-actions">
+        <div className="dataset-toolbar-center">
           <input
             type="search"
             className="dataset-search"
@@ -195,6 +195,8 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+        </div>
+        <div className="dataset-toolbar-actions">
           {selectedIds.size > 0 && (
             <button
               type="button"

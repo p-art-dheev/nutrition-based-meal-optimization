@@ -42,20 +42,6 @@
   flex-shrink: 0;
 }
 
-.step-badge {
-  background-color: rgba(167, 201, 87, 0.25);
-  color: var(--primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 10px;
-  position: absolute;
-  top: -1.65rem;
-  z-index: 1;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
 .step-icon-box {
   width: 72px;
   height: 72px;
@@ -241,12 +227,6 @@
     flex: none;
     padding: 1.5rem 1rem 1.25rem;
     justify-content: flex-start;
-  }
-
-  .step-badge {
-    position: static;
-    margin-bottom: 0.75rem;
-    align-self: flex-start;
   }
 
   .step-content p {
